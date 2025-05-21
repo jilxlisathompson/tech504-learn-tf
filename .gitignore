@@ -1,7 +1,12 @@
 # Local .terraform directories
+# Ignore because contains: backend config, module caches, provider plugins 
 .terraform/
 
 # .tfstate files
+# can include credentials, do not share these files using github
+# additional they cannot be written to 
+# locked when they are being updated by terraform, github 
+# does not have the feature for them to be locked 
 *.tfstate
 *.tfstate.*
 
