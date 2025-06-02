@@ -3,6 +3,37 @@
 This guide walks you through setting up a Jenkins server on an AWS EC2 instance using Ubuntu.
 
 ---
+- [Setting Up a Jenkins Server on AWS EC2](#setting-up-a-jenkins-server-on-aws-ec2)
+  - [Step 1: Launch an EC2 Instance](#step-1-launch-an-ec2-instance)
+    - [Configuration:](#configuration)
+  - [Step 2: Connect to the EC2 Instance](#step-2-connect-to-the-ec2-instance)
+  - [Step 3: Install Java](#step-3-install-java)
+  - [Step 4: Install Jenkins](#step-4-install-jenkins)
+  - [Step 5: Start Jenkins](#step-5-start-jenkins)
+  - [Step 7: Retrieve the Initial Admin Password](#step-7-retrieve-the-initial-admin-password)
+  - [Step 8: Sign in to Jenkins GUI](#step-8-sign-in-to-jenkins-gui)
+- [Setting up Jenkins CICD pipeline](#setting-up-jenkins-cicd-pipeline)
+  - [Structure of the CICD Pipeline](#structure-of-the-cicd-pipeline)
+  - [Logging in to Jenkins](#logging-in-to-jenkins)
+  - [Create GitHub App repo](#create-github-app-repo)
+  - [Generating SSH key](#generating-ssh-key)
+  - [Adding public key to GitHub Repo](#adding-public-key-to-github-repo)
+  - [Creating Job 1 on Jenkins](#creating-job-1-on-jenkins)
+    - [Setting up webhook](#setting-up-webhook)
+      - [What is a webhook](#what-is-a-webhook)
+      - [Steps](#steps)
+  - [Creating Job 2 on Jenkins](#creating-job-2-on-jenkins)
+    - [Purpose](#purpose)
+    - [Steps](#steps-1)
+  - [Creating Job 3 on Jenkins](#creating-job-3-on-jenkins)
+    - [Goals:](#goals)
+    - [Steps:](#steps-2)
+
+---
+
+Below is a schematic detailing the different aspects and steps involved in setting up the CI/CD pipeline for the Sparta test app using a Jenkins server 
+#TODO: add schematic here 
+
 Refer to the [Jenkins Documentation](https://www.jenkins.io/doc/) for advanced setup and plugin usage.
 
 ##  Step 1: Launch an EC2 Instance
@@ -166,6 +197,24 @@ git push origin HEAD:main
    - following the naming convention : 
         `<yourname>-job3-cd-deploy`
    - copy item from existing item i.e. job 2
-2. Click `OK` 
-3. Begin edditing the configuration details 
-4. 
+2. Click `OK` to begin edditing the configuration details 
+3. Create EC2 Instance using terraform/on the AWS gui 
+   1. Security group: Allow TCP port 22, TCP port 80 and 3000
+   2. See previous documentation for creating an EC2 instance (#TODO: add link)
+4. Adding SSH key for EC2 instance to Jenkins server
+   - In the top right corner, click on the drop down box titled `Trainee`
+   - Select `Credentials`
+   - you will be presented with a table containing the credentials associated with this Jenkins server 
+   - In the `Domain` column select `global` 
+   - Then select `Add Credentials` 
+   - Fill out the form for new credentials including the following fields.
+
+    | **Field**     | **Value**                                                                 |
+    |---------------|---------------------------------------------------------------------------|
+    | **Kind**       | `Secret file`                                                              |
+    | **Scope**      | `Global` or `System` (depends on your job visibility needs)               |
+    | **File**       | Upload the secret file from your local machine                            |
+    | **ID**         | *(Optional)* A unique ID to reference in your Jenkinsfile (e.g., `aws-deploy-key`) |
+    | **Description**| *(Optional)* Description for clarity                                       |
+5. Edditing the Configuration of the Jenkins Job 
+   - 
