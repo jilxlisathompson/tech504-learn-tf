@@ -26,13 +26,14 @@ This guide walks you through setting up a Jenkins server on an AWS EC2 instance 
     - [Purpose](#purpose)
     - [Steps](#steps-1)
   - [Creating Job 3 on Jenkins](#creating-job-3-on-jenkins)
-    - [Goals:](#goals)
-    - [Steps:](#steps-2)
+    - [Goals](#goals)
+    - [Steps](#steps-2)
+    - [Blockers](#blockers)
 
 ---
 
 Below is a schematic detailing the different aspects and steps involved in setting up the CI/CD pipeline for the Sparta test app using a Jenkins server 
-#TODO: add schematic here 
+![CICD pipeline schematic](images_screenshots/cicd_schematic.png) 
 
 Refer to the [Jenkins Documentation](https://www.jenkins.io/doc/) for advanced setup and plugin usage.
 
@@ -189,10 +190,10 @@ git push origin HEAD:main
 ![merge to main branch](images_screenshots/github_merged_job2.png)  
 
 ## Creating Job 3 on Jenkins 
-### Goals: 
+### Goals 
 - Copy the updated & tested code from Jenkins to the AWS EC2 instance
 
-### Steps:
+### Steps
 1. Creating new item
    - following the naming convention : 
         `<yourname>-job3-cd-deploy`
@@ -216,5 +217,67 @@ git push origin HEAD:main
     | **File**       | Upload the secret file from your local machine                            |
     | **ID**         | *(Optional)* A unique ID to reference in your Jenkinsfile (e.g., `aws-deploy-key`) |
     | **Description**| *(Optional)* Description for clarity                                       |
-5. Edditing the Configuration of the Jenkins Job 
+5. Editing the Configuration of the Jenkins Job 
+   - `Build Steps`
+```bash
+#!/bin/bash
+set -xe
+# Variables
+EC2_HOST="ubuntu@ec2-34-240-6-131.eu-west-1.compute.amazonaws.com"
+APP_DIR="/home/ubuntu/sparta-app-for-jenkins"
+
+# Prepare SSH
+mkdir -p ~/.ssh
+ssh-keyscan -H ec2-34-240-6-131.eu-west-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+chmod 400 "$PEM_FILE"
+
+# Copy code from Jenkins workspace to EC2 instance
+ssh -i "$PEM_FILE" "$EC2_HOST" "mkdir -p $APP_DIR"
+scp -i "$PEM_FILE" -r "$WORKSPACE"/* "$EC2_HOST:$APP_DIR"
+
+# SSH into EC2 and run commands
+ssh -i "$PEM_FILE" "$EC2_HOST" << EOF
+  set -xe
+  cd "$APP_DIR/app"
+  sudo systemctl restart nginx
+  sudo systemctl enable nginx
+
+  npm install
+  # Find the PID of any process listening on port 3000
+  PID=$(lsof -t -i:3000) || true
+  
+  if [ -n "$PID" ]; then
+    echo "Killing process $PID on port 3000"
+    sudo kill -9 $PID
+  else
+    echo "No process using port 3000"
+  fi
+  npm test
+
+  # Assuming you want to install PM2 globally and restart the app
+  sudo npm install -g pm2
+  pm2 stop all || true
+  pm2 start app.js --name app
+EOF
+```
+6. EC2 Instance 
    - 
+   - Security Groups: 
+     - allow port 3000 
+     - allow port 80
+     - allow port 22
+1. Editing Code 
+   - edit code in local copy of repo i.e. index.js file 
+   - add, commit and push the changes to the repo 
+   - check the sparta app url, the IP address of the EC2 instance 
+   - Below are screenshots of the changes made 
+<p float="left">
+  <img src="images_screenshots/sparta_app_page_1.png" width="200" />
+  <img src="images_screenshots/sparta_app_page_1.png" width="200" />
+</p>
+<br>
+
+### Blockers 
+- Ensure the PM2 processes are stopped and deleted this will produce an error 
+- use the commands `pm2 stop all && pm2 delete all`
+- check `Console Output` on Jenkins Server to troubleshoot and debug possible reasons if job fails
